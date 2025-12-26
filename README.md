@@ -1,1 +1,1 @@
-In lesson 2 we seperate the BMP files to a header file. So don't forget to get that file too.
+In lesson 2 we seperate the BMP files to a header file. It will be used in all the subsequent lessons also so do not forget to add it. Also, we miight add to it as we go along so watch for updates to the file. 
