@@ -1,7 +1,7 @@
 
-#define LOGO_HEIGHT   16
-#define LOGO_WIDTH    16
-static const unsigned char PROGMEM logo_bmp[] =
+#define ENEMY_H   16
+#define ENEMY_W    16
+static const unsigned char PROGMEM enemy[] =
 { 0b00000000, 0b11000000,
   0b00000001, 0b11000000,
   0b00000001, 0b11000000,
