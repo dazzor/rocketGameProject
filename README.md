@@ -1,1 +1,2 @@
-In lesson 2 we seperate the BMP files to a header file. It will be used in all the subsequent lessons also so do not forget to add it. Also, we miight add to it as we go along so watch for updates to the file. 
+In lesson 2 we seperate the BMP files to a header file. It will be used in all the subsequent lessons also so do not forget to add it. Also, we might add to it as we go along so watch for updates to the file. 
+I renamed the enemy (the Adafruit star logo) to be more clear. We will be using enemy, enemyx, enemyy, ENEMY_H and ENEMY_W from here on.... I hope.... 
