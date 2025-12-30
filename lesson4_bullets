@@ -38,10 +38,6 @@ const int BUTT4 = 13;
 int x = SCREEN_WIDTH-ROCKET_WIDTH;
 int y = (SCREEN_HEIGHT-ROCKET_HEIGHT) / 2;
 int enemyx = 0;
-int enemyy = 0;
-bool enemyleft = true;
-bool enemyup = true;
-
 
 bool debouncebutt = false;
 bool bullet[10] = {0};
@@ -76,26 +72,12 @@ void loop() {
   shootingButt();
 
   display.drawBitmap( x, y, rocket, ROCKET_WIDTH, ROCKET_HEIGHT, WHITE);
-  display.drawBitmap( enemyx, enemyy, enemy, ENEMY_W, ENEMY_H, WHITE);
+  display.drawBitmap( enemyx, (display.height() - LOGO_HEIGHT) / 2, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
     
   display.display();
 
-  moveEnemy();
-}
-
-void moveEnemy() {
-  if(enemyleft == true && enemyx < SCREEN_WIDTH/4) {enemyx++;}
-  if(enemyx >= SCREEN_WIDTH/4) {enemyleft = false;}
-  if(enemyleft == false && enemyx > 0-ENEMY_W*2) {enemyx--;}
-  if(enemyx <= 0-ENEMY_W*2) {
-    enemyy=random(SCREEN_HEIGHT);
-    enemyleft = true;
-  }
-
-  if(enemyup == true && enemyy >0){enemyy--;}
-  if(enemyy <= 0) {enemyup = false;}
-  if(enemyup == false && enemyy < SCREEN_HEIGHT) {enemyy++;}
-  if(enemyy >= SCREEN_HEIGHT) {enemyup = true;}
+  enemyx++;
+  if(enemyx >= SCREEN_WIDTH) enemyx = 0;
 }
 
 void loadingButt(){
