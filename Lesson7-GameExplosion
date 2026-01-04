@@ -20,9 +20,9 @@
 
 #include <SPI.h>
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#include "bmpheader.h"
+#include <Adafruit_GFX.h>     // graphics header files
+#include <Adafruit_SSD1306.h> // ssd1306 header files
+#include "bmpheader.h"        // icon header file
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -30,133 +30,135 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-const int BUTT1 = 0;
+const int BUTT1 = 0;  // declare buttons
 const int BUTT2 = 14;
 const int BUTT3 = 12;
 const int BUTT4 = 13;
 
-int x = SCREEN_WIDTH-ROCKET_WIDTH;
-int y = (SCREEN_HEIGHT-ROCKET_HEIGHT) / 2;
-int enemyx = 0;
-int enemyy = 0;
-bool enemyleft = true;
-bool enemyup = true;
+int x = SCREEN_WIDTH-ROCKET_WIDTH;          // rocket x axis - does not change
+int y = (SCREEN_HEIGHT-ROCKET_HEIGHT) / 2;  // rocket y axis - will change with button press
+int enemyx = 0;                             // enemy x location
+int enemyy = 0;                             // enemy y location
+bool enemyleft = true;                      // left/right movement of the enemy
+bool enemyup = true;                        // up/down movement of the enemy
 
-bool debouncebutt = false;
-bool bullet[10] = {0};
-int bx[10] = {0};
-int by[10] = {0};
-int bullet_counter = 0;
+bool debouncebutt = false;                  // button debounce
+bool bullet[10] = {0};                      // bullet true or false array
+int bx[10] = {0};                           // bullet x location
+int by[10] = {0};                           // bullet y location
+int bullet_counter = 0;                     // number of bullets in the array
+const int bulletMax = 10;                   // max number of bullets is 10
 
-const int maxRadius = 10;
-int xEnd = 0;
-int yEnd = 0;
-int prevEx = 0;
-int prevEy = 0;
-bool hit = false;
-int radius = 1;
-int ehit = 0;
+int radius = 1;                             // radius of explosion
+const int maxRadius = 10;                   // explosion max radius
+int xEnd = 0;                               // display explosion pixel x
+int yEnd = 0;                               // display explosion pixel y
+int prevEx = 0;                             // location of enemy at time of hit x
+int prevEy = 0;                             // location of enemy at time of hit y
+bool hit = false;                           // did we hit?
+int ehit = 0;                               // hit counter for enemy
+const int maxHit = 10;                      // max number of hits before explosion
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200);                     // serial output initialization for testing purposes
 
-  pinMode(BUTT1, INPUT);
+  pinMode(BUTT1, INPUT);                    // initializing the buttons as outputs
   pinMode(BUTT2, INPUT);
   pinMode(BUTT3, INPUT);
   pinMode(BUTT4, INPUT);
 
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) { // initialize the display
     Serial.println(F("SSD1306 allocation failed"));
     for(;;); // Don't proceed, loop forever
   }
 }
 
 void loop() {
-  display.clearDisplay();
+  display.clearDisplay();                                                 // clear the display
 
-  if(digitalRead(BUTT1) == 0 && y>-ROCKET_HEIGHT/2) { y--; }
-  if(digitalRead(BUTT2) == 0 && y<SCREEN_HEIGHT-ROCKET_HEIGHT/2) { y++; }
-  if(digitalRead(BUTT3) == 0){} // for future use
-  if(digitalRead(BUTT4) == 0) {
-    loadingButt();
-  } else debouncebutt = false;
+  if(digitalRead(BUTT1) == 0 && y>-ROCKET_HEIGHT/2) { y--; }              // move ship up
+  if(digitalRead(BUTT2) == 0 && y<SCREEN_HEIGHT-ROCKET_HEIGHT/2) { y++; } // move ship down
+  if(digitalRead(BUTT3) == 0){}                                           // for future use
+  if(digitalRead(BUTT4) == 0) {                                           // load a bullet
+    loadingButt();                                                        // function to load bullets
+  } else debouncebutt = false;                                            // debounce button
 
-  display.drawBitmap( x, y, rocket, ROCKET_WIDTH, ROCKET_HEIGHT, WHITE);
+  display.drawBitmap( x, y, rocket, ROCKET_WIDTH, ROCKET_HEIGHT, WHITE);  // draw the ship 
 
-  if(!hit){
-    display.drawBitmap( enemyx, enemyy, enemy, ENEMY_W, ENEMY_H, WHITE);
-    checkCollision();
-    moveEnemy();
-  } else {
-    explosion();
+  if(!hit){                                                               // if no hit do this
+    display.drawBitmap( enemyx, enemyy, enemy, ENEMY_W, ENEMY_H, WHITE);  // draw the enemy
+    checkCollision();                                                     // check for collision
+    moveEnemy();                                                          // move the enemy ship
+  } else {                                                                // if hit
+    explosion();                                                          // create explosion
   }
 
-  shootingButt();
-  display.display();
+  shootingButt();                                                         // shooting the bullet
+  display.display();                                                      // draw everything to the screen
 }
 
-void explosion() {
-  for (int angle = 0; angle < 360; angle += 45) {
-    xEnd = prevEx + radius * cos(radians(angle));
-    yEnd = prevEy + radius * sin(radians(angle));
-    display.drawPixel(xEnd, yEnd, WHITE);
+void explosion() {                                                        // explosion function
+  for (int angle = 0; angle < 360; angle += 45) { // move around a circle at increments of 45 degrees - 8 pixels
+    xEnd = prevEx + radius * cos(radians(angle)); // cosine gives x coordinate
+    yEnd = prevEy + radius * sin(radians(angle)); // sin gives y coordinate
+    display.drawPixel(xEnd, yEnd, WHITE);         // draw the pixel to the buffer to be displayed
   }
-  radius++;
-  if(radius >= maxRadius) {
-    hit = false;
-    radius = 1;
+  radius++;                                       // increment radius
+  if(radius >= maxRadius) {                       // check if radius is at max (10)
+    hit = false;                                  // if so set hit to false to resume game
+    radius = 1;                                   // prepare radius for next hit
   }
 }
 
-void checkCollision(){
-  for(int i=0;i<10;i++){
-    if(bullet[i] == true)
-      if(bx[i]>enemyx && bx[i]<enemyx+ENEMY_W/2 && by[i]>enemyy && by[i]<enemyy+ENEMY_H){
-        bullet[i]=false;
-        hit = true;
-        prevEx = enemyx;
-        prevEy = enemyy;
-        enemyx = 0-ENEMY_W*2;
-        enemyy=random(SCREEN_HEIGHT);
+void checkCollision(){                            // collision detection function
+  for(int i=0;i<10;i++){                          // check each bullet
+    if(bullet[i] == true)                         // if the bullet exist
+      if(bx[i]>enemyx && bx[i]<enemyx+ENEMY_W/2 && by[i]>enemyy && by[i]<enemyy+ENEMY_H){ // if bullet is inside enemy coordinates
+        bullet[i]=false;            // delete bullet
+        hit = true;                 // set hit to true (to run explosion to maxRadius)
+        prevEx = enemyx+ENEMY_W/2;  // center explosion to center of icon
+        prevEy = enemyy+ENEMY_H/2;
+        enemyx = 0-ENEMY_W*2;       // set the enemy off the screen
+        enemyy=random(SCREEN_HEIGHT); // set enemy at random y
       }
   }
 }
 
-void moveEnemy() {
-  if(enemyleft == true && enemyx < SCREEN_WIDTH/4) {enemyx++;}
-  if(enemyx >= SCREEN_WIDTH/4) {enemyleft = false;}
-  if(enemyleft == false && enemyx > 0-ENEMY_W*2) {enemyx--;}
-  if(enemyx <= 0-ENEMY_W*2) {
-    enemyy=random(SCREEN_HEIGHT);
-    enemyleft = true;
+void moveEnemy() {                                              // moving the enemy function
+  if(enemyleft == true && enemyx < SCREEN_WIDTH/4) {enemyx++;}  // only move the enemy to 1/4 the screen width
+  if(enemyx >= SCREEN_WIDTH/4) {enemyleft = false;}             // let the enemy move all the way off the screen
+  if(enemyleft == false && enemyx > 0-ENEMY_W*2) {enemyx--;}    // change direction of the enemy
+  if(enemyx <= 0-ENEMY_W*2) {                                   // if the enemy is off the screen 
+    enemyy=random(SCREEN_HEIGHT);                               //    randomize the y location
+    enemyleft = true;                                           // change direction
   }
 
-  if(enemyup == true && enemyy >0){enemyy--;}
-  if(enemyy <= 0) {enemyup = false;}
-  if(enemyup == false && enemyy < SCREEN_HEIGHT) {enemyy++;}
-  if(enemyy >= SCREEN_HEIGHT) {enemyup = true;}
+  if(enemyup == true && enemyy >0){enemyy--;}                   // move the enemy up
+  if(enemyy <= 0) {enemyup = false;}                            // if at top of screen change direction
+  if(enemyup == false && enemyy < SCREEN_HEIGHT) {enemyy++;}    // move enemy down
+  if(enemyy >= SCREEN_HEIGHT) {enemyup = true;}                 // change enemy direction
 }
 
-void loadingButt(){
+void loadingButt(){               // bullet loading function
     //Serial.println("LOADING");
-    if(debouncebutt == false){
+    if(debouncebutt == false){    // debounce the button
       debouncebutt = true;
-      bullet[bullet_counter] = true;
-      bx[bullet_counter] = x;
-      by[bullet_counter] = y + ROCKET_HEIGHT/2;
-      bullet_counter++;
-      if(bullet_counter == 10) bullet_counter = 0;
+      bullet[bullet_counter] = true;                        // add a bullet to the array
+      bx[bullet_counter] = x;                               // nose of the ship
+      by[bullet_counter] = y + ROCKET_HEIGHT/2;             // centerd to height of the ship
+      bullet_counter++;                                     // increment counter for next bullet
+      if(bullet_counter == bulletMax) bullet_counter = 0;   // limit to 10 bullets at a time
     }
 }
 
-void shootingButt(){
-  //Serial.println("SHOOTIING");
-  for(int i=0; i<10; i++) {
-    if(bullet[i] == true){
-      bx[i]=bx[i]-4;
-      if(bx[i]>0){
-        display.drawCircle(bx[i], by[i], 1, WHITE);
-      } else {bullet[i]=false;}
+void shootingButt(){                                        // shooting bullets function
+  //Serial.println("SHOOTIING");                            
+  for(int i=0; i<10; i++) {                                 // go through the array
+    if(bullet[i] == true){                                  // if the bullet exist
+      bx[i]=bx[i]-4;                                        // move the bullet by 4 pixels
+      if(bx[i]>0){                                          // as long as the bullet is on the screen
+        display.drawCircle(bx[i], by[i], 1, WHITE);         // draw the bullet to the buffer
+      } else {bullet[i]=false;}                             // if not on the screen - delete the bullet
     }
   }
 }
