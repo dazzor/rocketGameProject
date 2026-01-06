@@ -95,9 +95,10 @@ void loop() {
 
   shootingButt();                                                         // shooting the bullet
 
-  for(int q=0;q<=hit_counter;q+=3) // 30/3=10 hits max (3 pixels for spacing purposes)
+  for(int q=0;q<=hit_counter;q+=3) { // 30/3=10 hits max (3 pixels for spacing purposes)
     display.drawRect(q, 0, 2, 4, WHITE);
-
+  }
+  
   display.display();                                                      // draw everything to the screen
 }
 
